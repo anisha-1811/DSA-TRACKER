@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>100 Days DSA Challenge</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            max-width: 1000px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            color: #667eea;
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .progress-bar {
+            background: #e0e0e0;
+            height: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            height: 100%;
+            width: 0%;
+            transition: width 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: bold;
+        }
+
+        .quote {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            font-size: 1.2em;
+            font-style: italic;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .calendar {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .day {
+            aspect-ratio: 1;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: white;
+            position: relative;
+        }
+
+        .day:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .day-number {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #666;
+        }
+
+        .day.completed {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-color: #667eea;
+        }
+
+        .day.completed .day-number {
+            color: white;
+        }
+
+        .checkmark {
+            display: none;
+            color: white;
+            font-size: 1.5em;
+            position: absolute;
+            top: 5px;
+            right: 5px;
+        }
+
+        .day.completed .checkmark {
+            display: block;
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-top: 30px;
+            padding-top: 20px;
+            border-top: 2px solid #e0e0e0;
+        }
+
+        .stat {
+            text-align: center;
+        }
+
+        .stat-number {
+            font-size: 2em;
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .stat-label {
+            color: #666;
+            margin-top: 5px;
+        }
+
+        .reset-btn {
+            background: #ff4757;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin-top: 20px;
+            transition: background 0.3s ease;
+        }
+
+        .reset-btn:hover {
+            background: #ee5a6f;
+        }
+
+        @media (max-width: 600px) {
+            .container {
+                padding: 20px;
+            }
+
+            h1 {
+                font-size: 1.8em;
+            }
+
+            .calendar {
+                grid-template-columns: repeat(auto-fill, minmax(60px, 1fr));
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🚀 100 Days DSA Challenge</h1>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar">0%</div>
+            </div>
+        </header>
+
+        <div class="quote">
+            "Consistency beats perfection. Every problem you solve makes you stronger! 💪"
+        </div>
+
+        <div class="calendar" id="calendar"></div>
+
+        <div class="stats">
+            <div class="stat">
+                <div class="stat-number" id="completedDays">0</div>
+                <div class="stat-label">Days Completed</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="currentStreak">0</div>
+                <div class="stat-label">Current Streak</div>
+            </div>
+            <div class="stat">
+                <div class="stat-number" id="remainingDays">100</div>
+                <div class="stat-label">Days Remaining</div>
+            </div>
+        </div>
+
+        <center>
+            <button class="reset-btn" onclick="resetChallenge()">Reset Challenge</button>
+        </center>
+    </div>
+
+    <script>
+        const STORAGE_KEY = 'dsa-challenge-progress';
+        let completedDays = new Set();
+
+        // Initialize the calendar
+        function init() {
+            loadProgress();
+            createCalendar();
+            updateStats();
+        }
+
+        // Create calendar days
+        function createCalendar() {
+            const calendar = document.getElementById('calendar');
+            calendar.innerHTML = '';
+
+            for (let i = 1; i <= 100; i++) {
+                const dayDiv = document.createElement('div');
+                dayDiv.className = 'day';
+                if (completedDays.has(i)) {
+                    dayDiv.classList.add('completed');
+                }
+
+                dayDiv.innerHTML = `
+                    <span class="checkmark">✓</span>
+                    <span class="day-number">Day ${i}</span>
+                `;
+
+                dayDiv.addEventListener('click', () => toggleDay(i));
+                calendar.appendChild(dayDiv);
+            }
+        }
+
+        // Toggle day completion
+        function toggleDay(day) {
+            if (completedDays.has(day)) {
+                completedDays.delete(day);
+            } else {
+                completedDays.add(day);
+            }
+            saveProgress();
+            createCalendar();
+            updateStats();
+        }
+
+        // Update statistics
+        function updateStats() {
+            const completed = completedDays.size;
+            const remaining = 100 - completed;
+            const progress = Math.round((completed / 100) * 100);
+
+            document.getElementById('completedDays').textContent = completed;
+            document.getElementById('remainingDays').textContent = remaining;
+            document.getElementById('progressBar').style.width = progress + '%';
+            document.getElementById('progressBar').textContent = progress + '%';
+
+            // Calculate current streak
+            let streak = 0;
+            for (let i = 1; i <= 100; i++) {
+                if (completedDays.has(i)) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('currentStreak').textContent = streak;
+        }
+
+        // Save progress to localStorage
+        function saveProgress() {
+            try {
+                const data = JSON.stringify(Array.from(completedDays));
+                localStorage.setItem(STORAGE_KEY, data);
+                console.log('Progress saved:', Array.from(completedDays));
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }
+
+        // Load progress from localStorage
+        function loadProgress() {
+            try {
+                const savedData = localStorage.getItem(STORAGE_KEY);
+                if (savedData) {
+                    const savedDays = JSON.parse(savedData);
+                    completedDays = new Set(savedDays);
+                    console.log('Progress loaded:', Array.from(completedDays));
+                }
+            } catch (error) {
+                console.error('Error loading progress:', error);
+                completedDays = new Set();
+            }
+        }
+
+        // Reset challenge
+        function resetChallenge() {
+            if (confirm('Are you sure you want to reset your progress? This cannot be undone.')) {
+                completedDays = new Set();
+                saveProgress();
+                createCalendar();
+                updateStats();
+            }
+        }
+
+        // Initialize on page load
+        window.addEventListener('load', init);
+    </script>
+</body>
+</html>
